@@ -391,6 +391,8 @@ func (s *rtspServer) OnPacketRTP(ctx *gortsplib.ServerHandlerOnPacketRTPCtx) {
 	se := s.sessions[ctx.Session]
 	s.mutex.RUnlock()
 	se.onPacketRTP(ctx)
+
+	OnRTPForward(se, ctx)
 }
 
 // OnPacketRTCP implements gortsplib.ServerHandlerOnPacket.
