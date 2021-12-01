@@ -45,6 +45,15 @@ type rtspServerAPISessionsKickReq struct {
 	ID string
 }
 
+type rtspServerAPISessionForwardReq struct {
+	Source      string `json:"source"`
+	Destination string `json:"destination"`
+}
+
+type rtspServerAPISessionForwardRes struct {
+	Err error
+}
+
 type rtspServerParent interface {
 	Log(logger.Level, string, ...interface{})
 }
@@ -460,4 +469,16 @@ func (s *rtspServer) onAPISessionsKick(req rtspServerAPISessionsKickReq) rtspSer
 	}
 
 	return rtspServerAPISessionsKickRes{Err: fmt.Errorf("not found")}
+}
+
+func (s *rtspServer) onAPISessionForward(req rtspServerAPISessionForwardReq) rtspServerAPISessionForwardRes {
+	select {
+	case <-s.ctx.Done():
+		return rtspServerAPISessionForwardRes{Err: fmt.Errorf("terminated")}
+	default:
+	}
+
+	regiserForward(req.Source, req.Destination)
+
+	return rtspServerAPISessionForwardRes{}
 }

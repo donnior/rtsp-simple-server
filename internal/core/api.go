@@ -3,10 +3,12 @@ package core
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net"
 	"net/http"
 	"net/http/httputil"
 	"reflect"
+	"strings"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -145,6 +147,7 @@ type apiPathManager interface {
 type apiRTSPServer interface {
 	onAPISessionsList(req rtspServerAPISessionsListReq) rtspServerAPISessionsListRes
 	onAPISessionsKick(req rtspServerAPISessionsKickReq) rtspServerAPISessionsKickRes
+	onAPISessionForward(req rtspServerAPISessionForwardReq) rtspServerAPISessionForwardRes
 }
 
 type apiRTMPServer interface {
@@ -214,6 +217,7 @@ func newAPI(
 	if !interfaceIsEmpty(a.rtspServer) {
 		group.GET("/v1/rtspsessions/list", a.onRTSPSessionsList)
 		group.POST("/v1/rtspsessions/kick/:id", a.onRTSPSessionsKick)
+		group.POST("/v1/rtspsessions/forward", a.onRTSPSessionForward)
 	}
 
 	if !interfaceIsEmpty(a.rtspsServer) {
@@ -509,6 +513,22 @@ func (a *api) onHLSMuxersList(ctx *gin.Context) {
 	}
 
 	ctx.JSON(http.StatusOK, res.Data)
+}
+
+func (a *api) onRTSPSessionForward(ctx *gin.Context) {
+	var req rtspServerAPISessionForwardReq
+	err := ctx.BindJSON(&req)
+	if err != nil {
+		ctx.AbortWithError(http.StatusBadRequest, err)
+		return
+	}
+	if !strings.HasPrefix(req.Destination, "rtsp://") {
+		ctx.AbortWithError(http.StatusBadRequest,
+			errors.New("destination should start with rtsp://"))
+		return
+	}
+	a.rtspServer.onAPISessionForward(req)
+	ctx.Status(http.StatusOK)
 }
 
 // onConfReload is called by core.

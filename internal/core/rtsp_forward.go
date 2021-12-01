@@ -18,9 +18,18 @@ type forwarder struct {
 var forwarders = []*forwarder{}
 
 func init() {
+	// forwarders = append(forwarders, &forwarder{
+	// 	"live.stream",
+	// 	"rtsp://localhost:8554/live2.stream",
+	// 	nil,
+	// })
+}
+
+func regiserForward(source, destination string) {
+	//should check it's already been registered
 	forwarders = append(forwarders, &forwarder{
-		"live.stream",
-		"rtsp://localhost:8554/live2.stream",
+		source,
+		destination,
 		nil,
 	})
 }
